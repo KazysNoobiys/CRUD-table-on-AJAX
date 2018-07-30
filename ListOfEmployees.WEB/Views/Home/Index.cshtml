@@ -1,0 +1,282 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="container">
+
+    <div class="row">
+        <div class="row">
+            <div class="col-md-2">
+                <button type="button" class="addBtn btn btn-default">
+                    <span class="glyphicon glyphicon-check" style="color: blue"></span> Добавить
+                </button>
+            </div>
+            <div class="col-xs-4 col-md-offset-6">
+                <div class="input-group">
+                    <label class="control-label">Поиск:</label>
+                    <input type="text" class="form-control" id="searchStr" placeholder="Введите имя или фамилию">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary glyphicon glyphicon-search" id="searchBtn" type="button"></button>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <table class="table table-striped table-bordered table-hover" id="tableCRUD" 
+               data-sort-order="Name asc" data-search-str="" data-page-current="1" data-page-size="5">
+            <thead>
+            <tr>
+                <th class="text-center">ID</th>
+                <th class="text-center sortHead" data-sort="Name" date-sort-order="desc">Имя</th>
+                <th class="text-center">Фамилия</th>
+                <th class="text-center sortHead" data-sort="Date" date-sort-order="desc">Дата рождения</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <br />
+        <div class="btn-group" id="paginator"></div>
+    </div>
+    <div class="col-md-3 col-md-offset-5 hide" id="loader">
+        <img src="@Url.Content("/Content/Gif/35.gif")" />
+    </div>
+</div>
+
+
+@section Scripts{
+    <script>
+        $(function () {
+            $.fn.button.noConflict();
+            $(".addBtn").click(addBtnClick);
+            $(".sortHead").click(sort);
+            $("#searchBtn").click(search);
+            $("#searchStr").keydown(function(e) {
+                if (e.keyCode === 13)
+                    search();
+            });
+            update();
+        });
+
+        var sort = function () {
+            var sort = $(this).attr("data-sort");
+            var order = $(this).attr("date-sort-order");
+
+            if (sort === "Name") {
+                if (order === "asc")
+                    $(this).attr("date-sort-order", "desc");
+                else
+                    $(this).attr("date-sort-order", "asc");
+            } else {
+                if (order === "asc")
+                    $(this).attr("date-sort-order", "desc");
+                else
+                    $(this).attr("date-sort-order", "asc");
+            }
+            var sortOrder = sort + " " + order;
+            $("#tableCRUD").attr("data-sort-order", sortOrder);
+            update();
+        }
+
+        var search = function () {
+            var searchSrt = $("#searchStr").val();
+            $("#tableCRUD").attr("data-search-str", searchSrt);
+            $("#tableCRUD").attr("data-page-current", 1);
+            update();
+        }
+
+        var paginator = function(pageInfo) {
+            var pag = $("#paginator");
+            for (var i = pageInfo.StartPage; i <= pageInfo.EndPage; i++) {
+                var tag = $("<button>").attr("data-page-number", i).text(i);
+                if (i === pageInfo.CurrentPage) {
+                    tag.addClass("btn btn-primary");
+                } else {
+                    tag.addClass("btn btn-default");
+                }
+                tag.click(pageBtn);
+                pag.append(tag);
+            }
+            var btn = $("<button>").addClass("btn btn-default dropdown-toggle").attr("data-toggle", "dropdown");
+            var pageSize = $("#tableCRUD").attr("data-page-size");
+            btn.html(pageSize + " <b class=\"caret\"></b>");
+
+            var ul = $("<ul>").addClass("dropdown-menu");
+            for (var i = 1; i <= 3; i++) {
+                var li = $("<li>");
+                var a = $("<a>").attr({ "href": "#", "data-page-size": 5 * i }).click(function() {
+                    var pageSize = $(this).attr("data-page-size");
+                    $("#tableCRUD").attr("data-page-size", pageSize);
+                    $("#tableCRUD").attr("data-page-current", 1);
+                    update();
+                }).text(5 * i);
+                li.append(a);
+                ul.append(li);
+            }
+            pag.append(btn);
+            pag.append(ul);
+
+        }
+        var pageBtn = function() {
+            var num = $(this).attr("data-page-number");
+            $("#tableCRUD").attr("data-page-current", num);
+            update();
+        }
+
+        var update = function () {
+
+            $("#tableCRUD tbody tr").remove();
+            $("#paginator").empty();
+            var table = $("#tableCRUD tbody");
+          
+            var sortOrder = $("#tableCRUD").attr("data-sort-order");
+            var searchString = $("#tableCRUD").attr("data-search-str");
+            var pageSize = $("#tableCRUD").attr("data-page-size");
+            var pageCurrent = $("#tableCRUD").attr("data-page-current");
+            var url = "@Url.Action("GetAll", "Home")" +
+                "?sortOrder=" +
+                sortOrder +
+                "&searchString=" +
+                searchString +
+                "&pageSize=" +
+                pageSize +
+                "&pageCurrent=" +
+                pageCurrent;
+           
+            $.ajax({
+                url: url,
+                dataType: "json",
+                success: function (data) {
+                    var list = data.EmployeeViewModels;
+                    var pageInfo = data.PageInfo;
+                    $.each(list,
+                        function (key, val) {
+                            var line = $("<tr>");
+                            $.each(val,
+                                function (key, val) {
+                                    var td = $("<td>");
+                                    if (key === "Birthday") {
+                                        var num = 10;
+                                        td.text(val.substring(0, num)).addClass("text-center")
+                                            .attr("id", key);
+                                        line.append(td);
+                                    } else {
+                                        td.text(val).addClass("text-center")
+                                            .attr("id", key);
+                                        line.append(td);
+                                    }
+                                });
+                            var td = $("<td>");
+
+                            var removeBtn = $("<button>")
+                                .addClass("removeBtn btn btn-default glyphicon glyphicon glyphicon-remove")
+                                .css("color", "red").attr({
+                                    "data-toggle": "tooltip",
+                                    "title": "удалить запись",
+                                    "data-dialog-url": "@Url.Action("Remove", "Home")",
+                                    "data-dialog-title": "Удаление сотрудника"
+                                });
+                            var editBtn = $("<button>")
+                                .addClass("editBtn btn btn-default glyphicon glyphicon glyphicon-edit")
+                                .css("color", "green").attr({
+                                    "data-toggle": "tooltip",
+                                    "title": "редактировать запись",
+                                    "data-dialog-url": "@Url.Action("Edit", "Home")",
+                                    "data-dialog-title": "Редактирование сотрудника"
+                                });
+
+                            td.append(removeBtn);
+                            td.append(editBtn);
+                            line.append(td);
+                            table.append(line);
+                        });
+                    $(".removeBtn").click(removeBtnClick);
+                    $(".editBtn").click(editBtnClick);
+                    paginator(pageInfo);
+                },
+                beforeSend: function () {
+                    var loader = $("#loader");
+                    loader.removeClass("hide");
+                },
+                complete: function () {
+                    $("#loader").addClass("hide");
+                },
+                error: function () {
+                    alert("Error!");
+                }
+            });
+        }
+
+        var removeBtnClick = function () {
+            var id = $(this).parent().siblings("#Id");
+            var url = $(this).attr("data-dialog-url");
+
+            url += "?id=" + id.text();
+
+            $("<div>").addClass("dialog").dialog({
+                appendTo: "body",
+                title: $(this).attr("data-dialog-title"),
+                height: 250,
+                width: 500,
+                modal: true
+            }).load(url);
+        }
+
+        var editBtnClick = function () {
+            var id = $(this).parent().siblings("#Id");
+            var url = $(this).attr("data-dialog-url");
+
+            url += "?id=" + id.text();
+
+            $("<div id='dialogContent'>").addClass("dialog").dialog({
+                appendTo: "body",
+                title: $(this).attr("data-dialog-title"),
+                height: 500,
+                width: 500,
+                modal: true,
+                buttons: {
+                    "Сохранить": function () {
+                        $.ajax({
+                            url: url,
+                            type: "POST",
+                            data: $('form').serialize(),
+                            datatype: "json",
+                            success: function (result) {
+                                $("#dialogContent").html(result);
+                                $("#tableCRUD tbody tr").remove();
+                                update();
+                            }
+                        });
+                    }
+                }
+            }).load(url);
+        }
+
+        var addBtnClick = function () {
+
+            var url = "@Url.Action("Add", "Home")";
+
+            $("<div id='dialogContent'>").addClass("dialog").dialog({
+                appendTo: "body",
+                title: "Добавить новую запись",
+                height: 500,
+                width: 500,
+                modal: true,
+                buttons: {
+                    "Добавить": function () {
+                        $.ajax({
+                            url: url,
+                            type: "POST",
+                            data: $('form').serialize(),
+                            datatype: "json",
+                            success: function (result) {
+                                $("#dialogContent").html(result);
+                                $("#tableCRUD tbody tr").remove();
+                                update();
+                            }
+                        });
+                    }
+                }
+            }).load(url);
+        }
+
+    </script>
+}

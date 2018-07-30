@@ -1,0 +1,63 @@
+﻿@model ListOfEmployees.WEB.Models.EmployeeViewModel
+
+<h4>Вы действительно хотите удалить этого сотрудника?</h4>
+<div>
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+        <div class="container=">
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Id)
+                </div>
+                <div class="col-md-3">
+                    @Html.DisplayFor(m => m.Id)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.FirstName)
+                </div>
+                <div class="col-md-3">
+                    @Html.DisplayFor(m => m.FirstName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.LastName)
+                </div>
+                <div class="col-md-3">
+                    @Html.DisplayFor(m => m.LastName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Birthday)
+                </div>
+                <div class="col-md-3">
+                    @Html.DisplayFor(m => m.Birthday)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="submit" value="Удалить" />
+                </div>
+            </div>
+            @*<div>
+                @Html.LabelFor(model => model.FirstName)
+                @Html.DisplayFor(m => m.FirstName)
+            </div>
+            <div>
+                @Html.LabelFor(model => model.LastName)
+                @Html.DisplayFor(m => m.LastName)
+            </div>
+            <div>
+                @Html.LabelFor(model => model.Birthday)
+                @Html.DisplayFor(m => m.Birthday)
+            </div>
+
+            <input type="submit" value="Удалить" />*@
+        </div>
+    }
+
+</div>
